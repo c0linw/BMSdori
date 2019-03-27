@@ -5,19 +5,12 @@ See README.md.old for original iBMSC README file.
 
 **BMSdori**
 =====
+* IMPLEMENTED:
+  * Note colors set based on known Bandori note labels.
+  * Sliderbodies implemented for Bandori-style cross-lane slides.
+  * LN drawing functions modified to support colored notes.
 * TODO:
-  * Set note color based on known Bandori note labels
-      * PROGRESS:
-          * Added code to change color of notes. Works for regular notes, slides, flicks, sliderends, and skill notes
-          * "Dangling" sliders are now colored red as a warning. This happens when a slider note cannot find a corresponding sliderend after it.
-				* "Dangling" sliderends should also be colored red.
-		  * Fever activation notes not accounted for yet. Simply forgot to add them in my checks, easy fix later
-  * Render lines between slide notes for easier visualization
-      * PROGRESS:
-          * Poggers we got sliderbodies boi
-		  * Need to check for the first offscreen slider note so sliderbodies that go offscreen will still be rendered
-  * Make LNs render properly
-		* err i kinda broke it. damn.
+  * Fix offscreen LN/slide rendering
   * Create blank file with WAV labels preset for Bandori charts
 	  * The more I test, the more I realize how badly I need this feature
   
@@ -25,6 +18,7 @@ See README.md.old for original iBMSC README file.
 
 * NT (NoteTool) style input *can* be used for Bandori charting, but it is not recommended.
 	BMSE style is better because it allows input of different LN start/end notes
+	
 Changes
 =====
 * Out of the box OGG previews
