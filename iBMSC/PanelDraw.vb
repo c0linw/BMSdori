@@ -559,36 +559,29 @@ Partial Public Class MainWindow
             If getNextSlide(sNote, xLabel) = -1 Then
                 bright = Color.Red
                 dark = Color.Red
-                renderNote(sNote, xLabel, xHS, xVS, xHeight, xAlpha, bright, p1, p2, dark, e, xBrush2)
+                sNote.HasError = true
             Else
+                sNote.HasError = false
                 bright = getNoteColor(xLabel)
                 dark = getNoteColor(xLabel)
                 ' Get next slide note
                 Dim nextSlide As Note
                 nextSlide = Notes(getNextSlide(sNote, xLabel))
                 DrawSlider(sNote, nextSlide, e, xHS, xVS, xHeight)
-                renderNote(sNote, xLabel, xHS, xVS, xHeight, xAlpha, bright, p1, p2, dark, e, xBrush2)
             End If
             ' Check previous slide note and draw if offscreen
         Else ' TODO: draw long notes as start/end notes of Color.Lime and a slider body of Color.ForestGreen
             bright = getNoteColor(xLabel)
             dark = getNoteColor(xLabel)
-            renderNote(sNote, xLabel, xHS, xVS, xHeight, xAlpha, bright, p1, p2, dark, e, xBrush2)
         End If
 
 
         ' SLIDER END CHECKS FOR PREVIOUS SLIDER NOTE
         If xLabel = "slide_end_flick_a" OrElse xLabel = "slide_end_flick_b" OrElse xLabel = "slide_end_a" OrElse xLabel = "slide_end_b" Then
             ' check whether slide end exists after it
-            If badSliderEnd(sNote, xLabel) Then
-                bright = Color.Red
-                dark = Color.Red
-                renderNote(sNote, xLabel, xHS, xVS, xHeight, xAlpha, bright, p1, p2, dark, e, xBrush2)
-            Else
+                sNote.HasError = badSliderEnd(sNote, xLabel)
                 bright = getNoteColor(xLabel)
                 dark = getNoteColor(xLabel)
-                renderNote(sNote, xLabel, xHS, xVS, xHeight, xAlpha, bright, p1, p2, dark, e, xBrush2)
-            End If
         End If
 
         ' Offscreen slider fix
@@ -599,7 +592,15 @@ Partial Public Class MainWindow
             ' It is? Great, render it's body.
             ' Use line slope and (distance to screen bottom / distance between notes) to calculate x positions to start from bottom of the screen
             ' draw sliderbody lines between given points.
+            Dim prevSlideIndex As Integer
+            prevSlideIndex = GetPrevSlide(sNote, xLabel, xVS)
+            Console.WriteLine(prevSlideIndex)
+            If Not prevSlideIndex = -1 Then
+                DrawSlider(Notes(prevSlideIndex), sNote, e, xHS, xVS, xHeight)
+            End If
         End If
+
+            renderNote(sNote, xLabel, xHS, xVS, xHeight, xAlpha, bright, p1, p2, dark, e, xBrush2)
 
         Else
             If sNote.Length < 0 Then
@@ -610,16 +611,12 @@ Partial Public Class MainWindow
             If xLabel = "bd" And sNote.LongNote Then
                 bright = Color.FromArgb(255, 48, 199, 48)
                 dark = Color.FromArgb(255, 48, 199, 48)
-
-                renderNote(sNote, xLabel, xHS, xVS, xHeight, xAlpha, bright, p1, p2, dark, e, xBrush2)
                 Else 
                     bright = getNoteColor(xLabel)
                     dark = getNoteColor(xLabel)
-                
-
-                    renderNote(sNote, xLabel, xHS, xVS, xHeight, xAlpha, bright, p1, p2, dark, e, xBrush2)
             End If
 
+            renderNote(sNote, xLabel, xHS, xVS, xHeight, xAlpha, bright, p1, p2, dark, e, xBrush2)
         End If
 
     End Sub
@@ -851,6 +848,54 @@ Partial Public Class MainWindow
         Return -1
     End Function
 
+    
+    ' @Returns: Integer corresponding to note ID in Notes() array
+
+    ' Start from current note in Notes array
+    ' Check if index - 1 note exists, then check label of that note
+    ' if slide, check whether offscreen
+    '   if so, return note ID
+    ' if not, keep looping
+    ' if next lowest note doesn't exist, return -1
+    Private Function GetPrevSlide(ByVal sNote As Note, ByVal slideType As String, ByVal xVS As Integer)
+
+        Dim currIndex As Integer
+        Dim currLabel As String
+        Dim xLowerBorder As Single = Math.Abs(xVS) - vo.kHeight / gxHeight
+
+        If slideType = "slide_a" OrElse slideType = "slide_end_a" OrElse slideType = "slide_end_flick_a" Then
+            ' slide as first note means there are no slides before it
+            If Array.IndexOf(Notes, sNote) = LBound(Notes) Then Return -1
+            ' previous condition allows to start from index - 1
+            For currIndex = Array.IndexOf(Notes, sNote) - 1 To LBound(Notes) Step -1
+                currLabel = C10to36(Notes(currIndex).Value \ 10000)
+                If hWAV(C36to10(currLabel)) <> "" Then currLabel = Path.GetFileNameWithoutExtension(hWAV(C36to10(currLabel)))
+                If currLabel = "slide_a" Then
+                    If Notes(currIndex).VPosition < xLowerBorder Then
+                        Return currIndex
+                    End If
+                    Return -1
+                End If
+            Next
+        ElseIf slideType = "slide_b" OrElse slideType = "slide_end_b" OrElse slideType = "slide_end_flick_b" Then
+            ' ditto, default condition
+            If Array.IndexOf(Notes, sNote) = LBound(Notes) Then Return -1
+            ' previous condition allows us to start from index - 1
+            For currIndex = Array.IndexOf(Notes, sNote) - 1 To LBound(Notes) Step -1
+                currLabel = C10to36(Notes(currIndex).Value \ 10000)
+                If hWAV(C36to10(currLabel)) <> "" Then currLabel = Path.GetFileNameWithoutExtension(hWAV(C36to10(currLabel)))
+                If currLabel = "slide_b" Then
+                    If Notes(currIndex).VPosition < xLowerBorder Then
+                        Return currIndex
+                    End If
+                    Return -1
+                End If
+            Next
+        End If
+        ' Return -1 if next slider note was not found
+        Return -1
+    End Function
+
     ' @Returns: Integer corresponding to note ID in Notes() array
 
     ' Start from current note in Notes array
@@ -902,8 +947,10 @@ Partial Public Class MainWindow
                 Return Color.Yellow
             Case "slide_a", "slide_b", "slide_end_a", "slide_end_b"
                 Return Color.FromArgb(255, 48, 199, 48)
-            Case Else
+            Case "bd", "fever_note"
                 Return Color.FromArgb(255, 153, 204, 255)
+            Case Else
+                Return Color.Gray
         End Select
     End Function
 
@@ -914,7 +961,6 @@ Partial Public Class MainWindow
         ' Draw paired body
         If sNote.ColumnIndex < niB Then
             If sNote.LNPair <> 0 
-                Console.WriteLine(sNote.Length)
                 DrawBandoriLNBody(sNote, e, xHS, xVS, xHeight, xAlpha)
             End If
         End If
