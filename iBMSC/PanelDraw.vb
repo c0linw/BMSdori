@@ -298,7 +298,14 @@ Partial Public Class MainWindow
 
         Dim NoteInside = (Not AboveUpper) And AboveLower
 
-        Return NoteInside OrElse IntersectsNT OrElse IntersectsNT
+        Dim currLabel = C10to36(note.Value \ 10000)
+        If hWAV(C36to10(currLabel)) <> "" Then currLabel = Path.GetFileNameWithoutExtension(hWAV(C36to10(currLabel)))
+        Dim IntersectsSlide As Boolean
+        If currLabel = "slide_a" OrElse currLabel = "slide_b" Then
+            IntersectsSlide = (getNextSlide(note, currLabel) <> -1) And HeadBelow
+        End If
+
+        Return NoteInside OrElse IntersectsNT OrElse IntersectsNT OrElse Intersecs OrElse IntersectsSlide
     End Function
 
     Private Function IsNoteVisible(noteindex As Integer, xTHeight As Integer, xVS As Integer) As Boolean
@@ -584,21 +591,20 @@ Partial Public Class MainWindow
                 dark = getNoteColor(xLabel)
         End If
 
-        ' Offscreen slider fix
-        If xLabel = "slide_a" OrElse xLabel = "slide_b" OrElse xLabel = "slide_end_flick_a" OrElse xLabel = "slide_end_flick_b" OrElse xLabel = "slide_end_a" OrElse xLabel = "slide_end_b" Then
-            ' decrementing loop starting from note ID to get previous slide_a or slide_b note
-            ' Exit if no note or slide end note is found first
-            ' If previous slide note is found, check if offscreen
-            ' It is? Great, render it's body.
-            ' Use line slope and (distance to screen bottom / distance between notes) to calculate x positions to start from bottom of the screen
-            ' draw sliderbody lines between given points.
-            Dim prevSlideIndex As Integer
-            prevSlideIndex = GetPrevSlide(sNote, xLabel, xVS)
-            Console.WriteLine(prevSlideIndex)
-            If Not prevSlideIndex = -1 Then
-                DrawSlider(Notes(prevSlideIndex), sNote, e, xHS, xVS, xHeight)
-            End If
-        End If
+        '' Offscreen slider fix <- NO LONGER NEEDED BECAUSE CHECKING HAS BEEN MOVED TO IsNoteVisible
+        'If xLabel = "slide_a" OrElse xLabel = "slide_b" OrElse xLabel = "slide_end_flick_a" OrElse xLabel = "slide_end_flick_b" OrElse xLabel = "slide_end_a" OrElse xLabel = "slide_end_b" Then
+        '    ' decrementing loop starting from note ID to get previous slide_a or slide_b note
+        '    ' Exit if no note or slide end note is found first
+        '    ' If previous slide note is found, check if offscreen
+        '    ' It is? Great, render it's body.
+        '    ' Use line slope and (distance to screen bottom / distance between notes) to calculate x positions to start from bottom of the screen
+        '    ' draw sliderbody lines between given points.
+        '    Dim prevSlideIndex As Integer
+        '    prevSlideIndex = GetPrevSlide(sNote, xLabel, xVS)
+        '    If Not prevSlideIndex = -1 Then
+        '        DrawSlider(Notes(prevSlideIndex), sNote, e, xHS, xVS, xHeight)
+        '    End If
+        'End If
 
             renderNote(sNote, xLabel, xHS, xVS, xHeight, xAlpha, bright, p1, p2, dark, e, xBrush2)
 
@@ -867,7 +873,7 @@ Partial Public Class MainWindow
             ' slide as first note means there are no slides before it
             If Array.IndexOf(Notes, sNote) = LBound(Notes) Then Return -1
             ' previous condition allows to start from index - 1
-            For currIndex = Array.IndexOf(Notes, sNote) - 1 To LBound(Notes) Step -1
+            For currIndex = Array.IndexOf(Notes, sNote) To LBound(Notes) Step -1
                 currLabel = C10to36(Notes(currIndex).Value \ 10000)
                 If hWAV(C36to10(currLabel)) <> "" Then currLabel = Path.GetFileNameWithoutExtension(hWAV(C36to10(currLabel)))
                 If currLabel = "slide_a" Then
@@ -881,7 +887,7 @@ Partial Public Class MainWindow
             ' ditto, default condition
             If Array.IndexOf(Notes, sNote) = LBound(Notes) Then Return -1
             ' previous condition allows us to start from index - 1
-            For currIndex = Array.IndexOf(Notes, sNote) - 1 To LBound(Notes) Step -1
+            For currIndex = Array.IndexOf(Notes, sNote) To LBound(Notes) Step -1
                 currLabel = C10to36(Notes(currIndex).Value \ 10000)
                 If hWAV(C36to10(currLabel)) <> "" Then currLabel = Path.GetFileNameWithoutExtension(hWAV(C36to10(currLabel)))
                 If currLabel = "slide_b" Then
