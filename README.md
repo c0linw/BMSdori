@@ -10,7 +10,6 @@ See README.md.old for original iBMSC README file.
   * Sliderbodies implemented for Bandori-style cross-lane slides.
   * LN drawing functions modified to support colored notes.
 * TODO:
-  * Fix offscreen LN/slide rendering
   * Create blank file with WAV labels preset for Bandori charts
 	  * The more I test, the more I realize how badly I need this feature
   
